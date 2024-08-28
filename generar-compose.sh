@@ -20,6 +20,8 @@ generate_compose_file() {
     echo "    container_name: server" >> $COMPOSE_FILE
     echo "    image: server:latest" >> $COMPOSE_FILE
     echo "    entrypoint: python3 /main.py" >> $COMPOSE_FILE
+    echo "    volumes:" >> $COMPOSE_FILE
+    echo "      - ./server/config.ini:/config.ini" >> $COMPOSE_FILE
     echo "    environment:" >> $COMPOSE_FILE
     echo "      - PYTHONUNBUFFERED=1" >> $COMPOSE_FILE
     echo "      - LOGGING_LEVEL=DEBUG" >> $COMPOSE_FILE
@@ -32,6 +34,8 @@ generate_compose_file() {
         echo "    container_name: client$i" >> $COMPOSE_FILE
         echo "    image: client:latest" >> $COMPOSE_FILE
         echo "    entrypoint: /client" >> $COMPOSE_FILE
+        echo "    volumes:" >> $COMPOSE_FILE
+        echo "      - ./client/config.yaml:/build/config.yaml" >> $COMPOSE_FILE
         echo "    environment:" >> $COMPOSE_FILE
         echo "      - CLI_ID=$i" >> $COMPOSE_FILE
         echo "      - CLI_LOG_LEVEL=DEBUG" >> $COMPOSE_FILE

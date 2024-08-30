@@ -35,7 +35,7 @@ generate_compose_file() {
         echo "    image: client:latest" >> $COMPOSE_FILE
         echo "    entrypoint: /client" >> $COMPOSE_FILE
         echo "    volumes:" >> $COMPOSE_FILE
-        echo "      - ./client/config.yaml:/build/config.yaml" >> $COMPOSE_FILE
+        echo "      - ./client/config.yaml:/config.yaml" >> $COMPOSE_FILE
         echo "    environment:" >> $COMPOSE_FILE
         echo "      - CLI_ID=$i" >> $COMPOSE_FILE
         echo "      - CLI_LOG_LEVEL=DEBUG" >> $COMPOSE_FILE

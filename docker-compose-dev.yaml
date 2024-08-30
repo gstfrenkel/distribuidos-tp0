@@ -17,7 +17,7 @@ services:
     image: client:latest
     entrypoint: /client
     volumes:
-      - ./client/config.yaml:/build/config.yaml
+      - ./client/config.yaml:/config.yaml
     environment:
       - CLI_ID=1
       - CLI_LOG_LEVEL=DEBUG

@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/op/go-logging"
@@ -22,14 +25,19 @@ type ClientConfig struct {
 // Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
+	signalChan chan os.Signal
 	conn   net.Conn
 }
 
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config ClientConfig) *Client {
+	signalChan := make(chan os.Signal, 2)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
+
 	client := &Client{
 		config: config,
+		signalChan: signalChan,
 	}
 	return client
 }
@@ -81,9 +89,15 @@ func (c *Client) StartClientLoop() {
 			msg,
 		)
 
-		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
-
+		select {
+		case <- c.signalChan:
+			log.Infof("action: signal_received | result: success | client_id: %v", c.config.ID)
+			return
+		default:
+			// Wait a time between sending one message and the next one
+			time.Sleep(c.config.LoopPeriod)
+		}
 	}
+
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }

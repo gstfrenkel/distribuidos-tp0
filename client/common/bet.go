@@ -26,6 +26,6 @@ func newBet() bet {
 }
 
 // toBytes parses a client's bet into a slice of bytes.
-func (b bet) toBytes() []byte {
-	return []byte(fmt.Sprintf("%s,%s,%s,%s,%s;", b.name, b.surname, b.id, b.birthdate, b.number))
+func (b bet) toBytes(clientID string) []byte {
+	return []byte(fmt.Sprintf("%s,%s,%s,%s,%s,%s;", clientID, b.name, b.surname, b.id, b.birthdate, b.number))
 }

@@ -61,7 +61,7 @@ func (c *Client) StartClientLoop() {
 
 	bet := newBet()
 
-	err := c.writeAll(bet.toBytes())
+	err := c.writeAll(bet.toBytes(c.config.ID))
 	if err == nil {
 		log.Infof("action: apuesta_enviada | result: success | dni: %s | numero: %s", bet.id, bet.number)
 	} else {

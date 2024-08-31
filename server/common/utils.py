@@ -28,9 +28,9 @@ class Bet:
     def __from_string__(self, bet: str):
         s = bet.split(',')
 
-        logging.info(f'action: apuesta_almacenada | result: success | dni: {s[2]} | numero: {s[4]}')
+        logging.info(f'action: apuesta_almacenada | result: success | dni: {s[3]} | numero: {s[5]}')
 
-        return Bet("10", s[0], s[1], s[2], s[3], s[4])
+        return Bet(s[0], s[1], s[2], s[3], s[4], s[5])
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:

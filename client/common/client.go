@@ -18,6 +18,7 @@ type ClientConfig struct {
 	ServerAddress string
 	LoopAmount    int
 	LoopPeriod    time.Duration
+	MaxBatchSize  int
 }
 
 // Client Entity that encapsulates how
@@ -25,6 +26,7 @@ type Client struct {
 	config     ClientConfig
 	signalChan chan os.Signal
 	conn       net.Conn
+	reader     *reader
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -33,9 +35,16 @@ func NewClient(config ClientConfig) *Client {
 	signalChan := make(chan os.Signal, 2)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
+	reader, err := newCSVReader("./agency.csv", config.MaxBatchSize)
+	if err != nil {
+		log.Criticalf("action: read_file | result: fail | error: %v", err)
+		return nil
+	}
+
 	return &Client{
 		config:     config,
 		signalChan: signalChan,
+		reader:     reader,
 	}
 }
 
@@ -59,14 +68,34 @@ func (c *Client) createClientSocket() error {
 func (c *Client) StartClientLoop() {
 	c.createClientSocket()
 
-	bet := newBet()
+	loop: for {
+		batch, err1 := c.reader.readNextBatch(c.config.ID)
 
-	err := c.writeAll(bet.toBytes(c.config.ID))
-	if err == nil {
-		log.Infof("action: apuesta_enviada | result: success | dni: %s | numero: %s", bet.id, bet.number)
-	} else {
-		log.Errorf("action: apuesta_enviada | result: fail | dni: %s | numero: %s | error: %v", bet.id, bet.number, err)
+		b := []byte{}
+		for _, bet := range batch {
+			b = append(b, bet.toBytes(c.config.ID)...)
+		}
+
+		if err2 := c.writeAll(b); err2 == nil && len(b) != 0 {
+			//log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
+		} else if err2 != nil {
+			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
+			break loop
+		}
+		
+		if err1 != nil || len(b) == 0 {
+			break loop
+		}
+		
+		select {
+		case <- c.signalChan:
+			break loop
+		default:
+		}
 	}
+
+	c.reader.closeFile()
+	c.conn.Close()
 }
 
 // writeAll Sends message to the server in a short-write-safe manner.

@@ -38,22 +38,23 @@ class Server:
         client socket will also be closed
         """
         try:
-            s = ""
+            b = bytes()
+            idx = -1
 
             while True:
-                b = client_sock.recv(1024)
+                b += client_sock.recv(1024)
                 if not b:
                     break
 
-                s += b.decode('utf-8').strip()
+                try:
+                    idx = b.index(59)
+                except ValueError:
+                    continue    
 
-                idx = s.find(';')
-                if idx == -1:
-                    continue                
-
-                bet = Bet.__from_string__(s[:idx])
+                s = b[:idx].decode('utf-8').strip()
+                bet = Bet.__from_string__(s)
                 store_bets([bet])
-                s = s[idx+1:]
+                b = b[idx+1:]
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

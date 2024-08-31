@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"os"
 )
 
 // bet Representation of a client's bet.
@@ -14,14 +13,14 @@ type bet struct {
 	number    string
 }
 
-// newBet Creates a new bet out of envs.
-func newBet() bet {
+// newBet Creates a new bet.
+func newBet(name string, surname string, id string, birthdate string, number string) bet {
 	return bet{
-		name:      os.Getenv("NOMBRE"),
-		surname:   os.Getenv("APELLIDO"),
-		id:        os.Getenv("DOCUMENTO"),
-		birthdate: os.Getenv("NACIMIENTO"),
-		number:    os.Getenv("NUMERO"),
+		name:      name,
+		surname:   surname,
+		id:        id,
+		birthdate: birthdate,
+		number:    number,
 	}
 }
 

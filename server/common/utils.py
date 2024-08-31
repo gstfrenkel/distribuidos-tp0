@@ -1,7 +1,7 @@
 import csv
 import datetime
 import time
-
+import logging
 
 """ Bets storage location. """
 STORAGE_FILEPATH = "./bets.csv"
@@ -23,6 +23,14 @@ class Bet:
         self.document = document
         self.birthdate = datetime.date.fromisoformat(birthdate)
         self.number = int(number)
+
+    @classmethod
+    def __from_string__(self, bet: str):
+        s = bet.split(',')
+
+        logging.info(f'action: apuesta_almacenada | result: success | dni: {s[2]} | numero: {s[4]}')
+
+        return Bet("10", s[0], s[1], s[2], s[3], s[4])
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:

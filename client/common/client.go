@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/binary"
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -69,7 +70,22 @@ func (c *Client) createClientSocket() error {
 func (c *Client) StartClientLoop() {
 	c.createClientSocket()
 
-	loop: for {
+	defer c.reader.closeFile()
+	defer c.conn.Close()
+
+	if err := c.sendBets(); err != nil {
+		return
+	}
+
+	if err := binary.Write(c.conn, binary.BigEndian, int16(0)); err != nil {
+		return
+	}
+
+	
+}
+
+func (c *Client) sendBets() error {
+	for {
 		batch, err1 := c.reader.readNextBatch(c.config.ID)
 
 		b := []byte{}
@@ -84,30 +100,31 @@ func (c *Client) StartClientLoop() {
 			log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
-			break loop
+			return err2
 		}
 		
 		if err1 != nil || len(b) == 0 {
-			break loop
+			return nil
 		}
 		
 		buf := make([]byte, 1)
 		select {
 		case <- c.signalChan:
-			break loop
+			return errors.New("exit signal received")
 		default:
 			if _, err := c.conn.Read(buf); err != nil {
-				break loop
+				return err
 			}
 		}
 	}
-
-	c.reader.closeFile()
-	c.conn.Close()
 }
 
 // writeAll Sends message to the server in a short-write-safe manner.
 func (c *Client) writeAll(b []byte) error {
+	if len(b) == 0 {
+		return nil
+	}
+
 	if err := binary.Write(c.conn, binary.BigEndian, int16(len(b))); err != nil {
 		return err
 	}

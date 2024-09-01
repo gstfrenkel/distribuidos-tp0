@@ -28,6 +28,9 @@ class Bet:
     def __from_string__(self, bet: str):
         s = bet.split(',')
 
+        if int(s[3]) < 0 or int(s[5]) < 0 or not is_birthdate_valid(s[4]):
+            raise Exception
+
         return Bet(s[0], s[1], s[2], s[3], s[4], s[5])
 
 """ Checks whether a bet won the prize or not. """
@@ -55,3 +58,9 @@ def load_bets() -> list[Bet]:
         for row in reader:
             yield Bet(row[0], row[1], row[2], row[3], row[4], row[5])
 
+def is_birthdate_valid(date: str):
+    try:
+        datetime.date.fromisoformat(date)
+        return True
+    except ValueError:
+        return False

@@ -5,7 +5,8 @@ import (
 	"os"
 )
 
-const maxBatchLength = 8192
+// Extra byte to compensate for the separator to be discarded
+const maxBatchLength = 8193
 
 type reader struct {
 	file         *os.File
@@ -14,7 +15,7 @@ type reader struct {
 	extraBet     *bet
 }
 
-// NewCSVReader initializes a new CSVReader
+// NewCSVReader Initializes a new CSVReader
 func newCSVReader(filePath string, maxBatchSize int) (*reader, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -23,6 +24,7 @@ func newCSVReader(filePath string, maxBatchSize int) (*reader, error) {
 	return &reader{file: file, reader: csv.NewReader(file), maxBatchSize: maxBatchSize}, nil
 }
 
+// readNextBatch Reads a series of new bets until either maxBatchLength or r.maxBatchSize are reached.
 func (r *reader) readNextBatch(clientID string) ([]bet, error) {
 	bets := []bet{}
 	batchSize := 0
@@ -50,6 +52,7 @@ func (r *reader) readNextBatch(clientID string) ([]bet, error) {
 	return bets, nil
 }
 
+// readNextBet Reads a new bet from r.reader.
 func (r *reader) readNextBet() (*bet, error) {
 	bet, err := r.reader.Read()
 	if err != nil {

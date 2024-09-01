@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/binary"
 	"net"
 	"os"
 	"os/signal"
@@ -76,8 +77,11 @@ func (c *Client) StartClientLoop() {
 			b = append(b, bet.toBytes(c.config.ID)...)
 		}
 
+		// Discard last separator
+		b = b[:len(b)-1]
+
 		if err2 := c.writeAll(b); err2 == nil && len(b) != 0 {
-			//log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
+			log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			break loop
@@ -87,10 +91,14 @@ func (c *Client) StartClientLoop() {
 			break loop
 		}
 		
+		buf := make([]byte, 1)
 		select {
 		case <- c.signalChan:
 			break loop
 		default:
+			if _, err := c.conn.Read(buf); err != nil {
+				break loop
+			}
 		}
 	}
 
@@ -100,6 +108,10 @@ func (c *Client) StartClientLoop() {
 
 // writeAll Sends message to the server in a short-write-safe manner.
 func (c *Client) writeAll(b []byte) error {
+	if err := binary.Write(c.conn, binary.BigEndian, int16(len(b))); err != nil {
+		return err
+	}
+
 	written := 0
 	for written < len(b) {
 		n, err := c.conn.Write(b[written:])

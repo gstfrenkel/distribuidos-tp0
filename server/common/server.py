@@ -5,6 +5,9 @@ import sys
 
 from common.utils import Bet, store_bets
 
+OK = b'0'
+ERR = b'1'
+
 class Server:
     def __init__(self, port, listen_backlog):
         # Initialize server socket
@@ -38,27 +41,34 @@ class Server:
         client socket will also be closed
         """
         try:
-            b = bytes()
-            idx = -1
-
+            socket_name = client_sock.getpeername()
             while True:
-                b += client_sock.recv(1024)
-                if not b:
+                b = bytes()
+                bytes_read = 0
+
+                batch_size = int.from_bytes(client_sock.recv(2), "big")
+                if not batch_size:
                     break
 
-                try:
-                    idx = b.index(59)
-                except ValueError:
-                    continue    
+                while bytes_read < batch_size:
+                    b += client_sock.recv(batch_size - bytes_read)
+                    bytes_read = len(b)
 
-                s = b[:idx].decode('utf-8').strip()
-                bet = Bet.__from_string__(s)
-                store_bets([bet])
-                b = b[idx+1:]
+                bets_decoded = b.decode('utf-8').strip().split(';')
+                try:
+                    bets = [Bet.__from_string__(bet) for bet in bets_decoded]
+                    store_bets(bets)
+                    logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets_decoded)}')
+                    client_sock.send(OK)
+                except:
+                    logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets_decoded)}')
+                    client_sock.send(ERR)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
+            logging.info(f"action: conexión_cerrada | result: success | client: {socket_name}")
             client_sock.close()
+            self.clients.remove(client_sock)
 
     def __accept_new_connection(self):
         """

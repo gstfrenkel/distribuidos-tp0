@@ -5,8 +5,12 @@ import (
 	"os"
 )
 
-// Extra byte to compensate for the separator to be discarded
-const maxBatchLength = 8193
+const (
+	endSeparatorLength = 1
+	batchLength = 4
+	maxPayloadLength = 8192
+	maxBatchLength = maxPayloadLength + endSeparatorLength - batchLength
+)
 
 type reader struct {
 	file         *os.File
@@ -25,13 +29,13 @@ func newCSVReader(filePath string, maxBatchSize int) (*reader, error) {
 }
 
 // readNextBatch Reads a series of new bets until either maxBatchLength or r.maxBatchSize are reached.
-func (r *reader) readNextBatch(clientID string) ([]bet, error) {
+func (r *reader) readNextBatch() ([]bet, error) {
 	bets := []bet{}
 	batchSize := 0
 
 	if r.extraBet != nil {
 		bets = append(bets, *r.extraBet)
-		batchSize += len(r.extraBet.toBytes(clientID))
+		batchSize += len(r.extraBet.toBytes())
 	}
 
 	for len(bets) < r.maxBatchSize {
@@ -40,12 +44,12 @@ func (r *reader) readNextBatch(clientID string) ([]bet, error) {
 			return bets, err
 		}
 
-		if batchSize + len(newBet.toBytes(clientID)) > maxBatchLength {
+		if batchSize + len(newBet.toBytes()) > maxBatchLength {
 			r.extraBet = newBet
 			break
 		}
 
-		batchSize += len(newBet.toBytes(clientID))
+		batchSize += len(newBet.toBytes())
 		bets = append(bets, *newBet)
 	}
 

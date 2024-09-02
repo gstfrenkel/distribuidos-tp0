@@ -6,11 +6,14 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/op/go-logging"
 )
+
+const headerFinished = 0
 
 var log = logging.MustGetLogger("log")
 
@@ -73,31 +76,40 @@ func (c *Client) StartClientLoop() {
 	defer c.reader.closeFile()
 	defer c.conn.Close()
 
+	clientID, err := strconv.Atoi(c.config.ID)
+	if err != nil || clientID < 0 || clientID > 255 {
+		return
+	}
+
+	if err := binary.Write(c.conn, binary.BigEndian, byte(clientID)); err != nil {
+		return
+	}
+
 	if err := c.sendBets(); err != nil {
 		return
 	}
 
-	if err := binary.Write(c.conn, binary.BigEndian, int16(0)); err != nil {
+	if err := binary.Write(c.conn, binary.BigEndian, int16(headerFinished)); err != nil {
 		return
 	}
 
-	
+	c.recvResults()
 }
 
 func (c *Client) sendBets() error {
 	for {
-		batch, err1 := c.reader.readNextBatch(c.config.ID)
+		batch, err1 := c.reader.readNextBatch()
 
 		b := []byte{}
 		for _, bet := range batch {
-			b = append(b, bet.toBytes(c.config.ID)...)
+			b = append(b, bet.toBytes()...)
 		}
 
 		// Discard last separator
 		b = b[:len(b)-1]
 
 		if err2 := c.writeAll(b); err2 == nil && len(b) != 0 {
-			log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
+			//log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2
@@ -117,6 +129,42 @@ func (c *Client) sendBets() error {
 			}
 		}
 	}
+}
+
+func (c* Client) recvResults() error {
+	b := []byte{}
+	bytesRead := 0
+
+	log.Infof("A")
+
+	for bytesRead < 2 {
+		//log.Infof("largo %d", len(b))
+
+		n, err := c.conn.Read(b[bytesRead:])
+		if err != nil {
+			return err
+		}
+		bytesRead += n
+	}
+
+	log.Infof("B")
+
+
+	winnersLength := int(binary.BigEndian.Uint16(b[0:2]))
+	log.Infof("winners length: %d", winnersLength)
+
+	for bytesRead < winnersLength + 2 {
+		n, err := c.conn.Read(b[bytesRead:])
+		if err != nil {
+			return err
+		}
+		bytesRead += n
+	}
+
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", winnersLength / 2)
+
+	_, err := c.conn.Write([]byte("0"))
+	return err
 }
 
 // writeAll Sends message to the server in a short-write-safe manner.

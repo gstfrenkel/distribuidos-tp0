@@ -25,13 +25,13 @@ class Bet:
         self.number = int(number)
 
     @classmethod
-    def __from_string__(self, bet: str):
+    def __from_string__(self, agency: str, bet: str):
         s = bet.split(',')
 
-        if int(s[3]) < 0 or int(s[5]) < 0 or not is_birthdate_valid(s[4]):
+        if int(s[2]) < 0 or int(s[4]) < 0 or not is_birthdate_valid(s[3]):
             raise Exception
 
-        return Bet(s[0], s[1], s[2], s[3], s[4], s[5])
+        return Bet(agency, s[0], s[1], s[2], s[3], s[4])
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:

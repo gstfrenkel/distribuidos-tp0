@@ -22,7 +22,6 @@ generate_compose_file() {
     echo "    entrypoint: python3 /main.py" >> $COMPOSE_FILE
     echo "    environment:" >> $COMPOSE_FILE
     echo "      - PYTHONUNBUFFERED=1" >> $COMPOSE_FILE
-    echo "      - LOGGING_LEVEL=DEBUG" >> $COMPOSE_FILE
     echo "    networks:" >> $COMPOSE_FILE
     echo "      - testing_net" >> $COMPOSE_FILE
     echo "" >> $COMPOSE_FILE
@@ -34,7 +33,6 @@ generate_compose_file() {
         echo "    entrypoint: /client" >> $COMPOSE_FILE
         echo "    environment:" >> $COMPOSE_FILE
         echo "      - CLI_ID=$i" >> $COMPOSE_FILE
-        echo "      - CLI_LOG_LEVEL=DEBUG" >> $COMPOSE_FILE
         echo "    networks:" >> $COMPOSE_FILE
         echo "      - testing_net" >> $COMPOSE_FILE
         echo "    depends_on:" >> $COMPOSE_FILE

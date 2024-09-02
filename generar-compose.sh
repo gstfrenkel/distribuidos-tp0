@@ -24,7 +24,6 @@ generate_compose_file() {
     echo "      - ./server/config.ini:/config.ini" >> $COMPOSE_FILE
     echo "    environment:" >> $COMPOSE_FILE
     echo "      - PYTHONUNBUFFERED=1" >> $COMPOSE_FILE
-    echo "      - LOGGING_LEVEL=DEBUG" >> $COMPOSE_FILE
     echo "    networks:" >> $COMPOSE_FILE
     echo "      - testing_net" >> $COMPOSE_FILE
     echo "" >> $COMPOSE_FILE

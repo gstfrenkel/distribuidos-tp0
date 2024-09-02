@@ -136,30 +136,32 @@ func (c *Client) sendBets() error {
 }
 
 func (c* Client) recvResults() error {
-	b := []byte{}
+	b := make([]byte, 2)
 	bytesRead := 0
 
-	log.Infof("A")
+	log.Infof("A bytes: %v", b)
 
 	for bytesRead < 2 {
-		bytes := []byte{}
-		log.Infof("bytes read: %v", bytesRead)
+		log.Infof("bytes read: %v | bytes: %v", bytesRead, b)
 
-		n, err := c.conn.Read(bytes)
+		n, err := c.conn.Read(b[bytesRead:])
 		if err != nil {
 			return err
 		}
-		b = append(b, bytes...)
 		bytesRead += n
 	}
 
-	log.Infof("B")
+	log.Infof("B bytes: %v", b)
+
+	log.Infof("Winners value: %d", binary.BigEndian.Uint16(b[0:2]))
 
 
 	winnersLength := int(binary.BigEndian.Uint16(b[0:2]))
 	log.Infof("winners length: %d", winnersLength)
 
-	for bytesRead < winnersLength + 2 {
+	b = make([]byte, winnersLength)
+	bytesRead = 0
+	for bytesRead < winnersLength {
 		n, err := c.conn.Read(b[bytesRead:])
 		if err != nil {
 			return err

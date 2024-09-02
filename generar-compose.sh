@@ -38,7 +38,6 @@ generate_compose_file() {
         echo "      - ./client/config.yaml:/config.yaml" >> $COMPOSE_FILE
         echo "    environment:" >> $COMPOSE_FILE
         echo "      - CLI_ID=$i" >> $COMPOSE_FILE
-        echo "      - CLI_LOG_LEVEL=DEBUG" >> $COMPOSE_FILE
         echo "    networks:" >> $COMPOSE_FILE
         echo "      - testing_net" >> $COMPOSE_FILE
         echo "    depends_on:" >> $COMPOSE_FILE

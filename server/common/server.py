@@ -52,7 +52,7 @@ class Server:
 
             self.__send_results()
         except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
+            logging.error(f"action: receive_message | result: fail | error: {e}")
         #finally:
         #    logging.info(f"action: conexión_cerrada | result: success | client: {socket_name}")
         #    client_sock.close()

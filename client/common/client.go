@@ -78,18 +78,22 @@ func (c *Client) StartClientLoop() {
 
 	clientID, err := strconv.Atoi(c.config.ID)
 	if err != nil || clientID < 0 || clientID > 255 {
+		log.Infof("action: parse client ID: %d | result: fail | error: %v", clientID, err)
 		return
 	}
 
 	if err := binary.Write(c.conn, binary.BigEndian, byte(clientID)); err != nil {
+		log.Infof("action: send client ID | result: fail | error: %v", err)
 		return
 	}
 
 	if err := c.sendBets(); err != nil {
+		log.Infof("action: send bets | result: fail | error: %v", err)
 		return
 	}
 
 	if err := binary.Write(c.conn, binary.BigEndian, int16(headerFinished)); err != nil {
+		log.Infof("action: send finish header | result: fail | error: %v", err)
 		return
 	}
 
@@ -114,7 +118,7 @@ func (c *Client) sendBets() error {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2
 		}
-		
+
 		if err1 != nil || len(b) == 0 {
 			return nil
 		}
@@ -138,12 +142,14 @@ func (c* Client) recvResults() error {
 	log.Infof("A")
 
 	for bytesRead < 2 {
-		//log.Infof("largo %d", len(b))
+		bytes := []byte{}
+		log.Infof("bytes read: %v", bytesRead)
 
-		n, err := c.conn.Read(b[bytesRead:])
+		n, err := c.conn.Read(bytes)
 		if err != nil {
 			return err
 		}
+		b = append(b, bytes...)
 		bytesRead += n
 	}
 

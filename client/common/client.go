@@ -119,7 +119,7 @@ func (c *Client) sendBets() error {
 		}
 
 		if err2 := c.writeAll(b); err2 == nil && len(b) != 0 {
-			//log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
+			log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2

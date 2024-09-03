@@ -79,7 +79,7 @@ class Server:
             try:
                 bets = [Bet.__from_string__(agency, bet) for bet in bets_decoded]
                 store_bets(bets)
-                #logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets_decoded)}')
+                logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets_decoded)}')
                 client_sock.send(OK)
             except:
                 logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets_decoded)}')

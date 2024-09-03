@@ -78,28 +78,31 @@ func (c *Client) StartClientLoop() {
 
 	clientID, err := strconv.Atoi(c.config.ID)
 	if err != nil || clientID < 0 || clientID > 255 {
-		log.Infof("action: parse client ID: %d | result: fail | error: %v", clientID, err)
+		log.Errorf("action: parse client ID: %d | result: fail | error: %v", clientID, err)
 		return
 	}
 
 	if err := binary.Write(c.conn, binary.BigEndian, byte(clientID)); err != nil {
-		log.Infof("action: send client ID | result: fail | error: %v", err)
+		log.Errorf("action: send client ID | result: fail | error: %v", err)
 		return
 	}
 
 	if err := c.sendBets(); err != nil {
-		log.Infof("action: send bets | result: fail | error: %v", err)
+		log.Errorf("action: send bets | result: fail | error: %v", err)
 		return
 	}
 
 	if err := binary.Write(c.conn, binary.BigEndian, int16(headerFinished)); err != nil {
-		log.Infof("action: send finish header | result: fail | error: %v", err)
+		log.Errorf("action: send finish header | result: fail | error: %v", err)
 		return
 	}
 
-	c.recvResults()
+	if err := c.recvResults(); err != nil {
+		log.Errorf("action: receive_results | result: fail | error: %v", err)
+	}
 }
 
+// sendBets Send the client's bets to the server.
 func (c *Client) sendBets() error {
 	for {
 		batch, err1 := c.reader.readNextBatch()
@@ -134,40 +137,37 @@ func (c *Client) sendBets() error {
 	}
 }
 
+// recvResults receives the client's bet winners.
 func (c* Client) recvResults() error {
 	b := make([]byte, 1024)
-	bytesRead := 0
-
-	for bytesRead < 2 {
-		n, err := c.conn.Read(b[bytesRead:])
-		if err != nil {
-			return err
-		}
-		bytesRead += n
+	bytesRead, err := c.readAll(b, 2)
+	if err != nil {
+		return err
 	}
 
 	winnersLength := int(binary.BigEndian.Uint16(b[0:2]))
+	bytesRead -= 2
+	b = b[2:]
+
 	if winnersLength > 1024 {
 		bAux := make([]byte, winnersLength)
-		bAux = append(bAux, b[2:]...)
+		bAux = append(bAux, b...)
 		b = bAux
 	}
 
-	for bytesRead < winnersLength + 2 {
-		n, err := c.conn.Read(b[bytesRead:])
-		if err != nil {
+	if bytesRead < winnersLength {
+		if _, err := c.readAll(b[len(b):], winnersLength); err != nil {
 			return err
 		}
-		bytesRead += n
 	}
 
-	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", winnersLength / 2)
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", winnersLength / 4)
 
-	_, err := c.conn.Write([]byte("0"))
+	_, err = c.conn.Write([]byte("0"))
 	return err
 }
 
-// writeAll Sends message to the server in a short-write-safe manner.
+// writeAll Sends a message to the server in a short-write-safe manner.
 func (c *Client) writeAll(b []byte) error {
 	if len(b) == 0 {
 		return nil
@@ -186,4 +186,19 @@ func (c *Client) writeAll(b []byte) error {
 		written += n
 	}
 	return nil
+}
+
+// readAll Receives a message from the server in a short-read-safe manner.
+func (c *Client) readAll(b []byte, bytesToRead int) (int, error) {
+	bytesRead := 0
+
+	for bytesRead < bytesToRead {
+		n, err := c.conn.Read(b[bytesRead:])
+		if err != nil {
+			return bytesRead, err
+		}
+		bytesRead += n
+	}
+
+	return bytesRead, nil
 }

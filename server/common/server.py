@@ -50,7 +50,7 @@ class Server:
             if self.finished_clients != self.listen_backlog:
                 return
 
-            self.__send_results(client_sock)
+            self.__send_results()
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         #finally:
@@ -85,7 +85,7 @@ class Server:
                 logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets_decoded)}')
                 client_sock.send(ERR)
 
-    def __send_results(self, client_sock):
+    def __send_results(self):
         winners_by_agency = defaultdict(bytes)
 
         logging.info('action: sorteo | result: success')
@@ -93,11 +93,9 @@ class Server:
         winners = [bet for bet in load_bets() if has_won(bet)]
         for bet in winners:
             winners_by_agency[bet.agency] += int(bet.document).to_bytes(4, "big", signed=False)
-            logging.info(f'winner: {bet.document}')
 
         for client_id, bets in winners_by_agency.items():
-            #client_sock = self.clients.get(client_id)
-            logging.info(f'clients: {self.clients} | name: {client_sock.getpeername()} | client: {client_id}')
+            client_sock = self.clients.get(client_id)
 
             bytes_to_send = len(bets)
             bytes_sent = 0
@@ -106,24 +104,18 @@ class Server:
 
             while bytes_to_send > bytes_sent:
                 try:
-                    logging.info(f"bytes sent: {bytes_sent} | bytes: {b[bytes_sent:]}")
                     bytes_sent += client_sock.send(b[bytes_sent:])
                 except:
                     logging.error(f"action: ganadores_enviados | result: fail | client: {client_id}")
                     break
 
-            logging.info(f"bytes sent: {bytes_sent}")
-            
-
             try:
-                logging.info("wait for ack")
                 client_sock.recv(1)
-                logging("TERMINÓ")
+                logging.info(f"action: conexión_cerrada | result: success | client: {client_id}")
             except Exception as e:
-                logging.error(f"action: receive ack | result: fail | client: {client_id} | error: {e}")
+                logging.error(f"action: conexión_cerrada | result: fail | client: {client_id} | error: {e}")
                 pass
             finally:
-                logging.info(f"action: conexión_cerrada | result: success | client: {client_id}")
                 client_sock.close()
                 del self.clients[client_id]
 

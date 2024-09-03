@@ -111,16 +111,15 @@ func (c *Client) sendBets() error {
 
 		// Discard last separator
 		b = b[:len(b)-1]
+		if err1 != nil || len(b) == 0 {
+			return nil
+		}
 
 		if err2 := c.writeAll(b); err2 == nil && len(b) != 0 {
 			//log.Infof("action: apuestas_enviadas | result: success | cantidad: %d", len(batch))
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2
-		}
-
-		if err1 != nil || len(b) == 0 {
-			return nil
 		}
 		
 		buf := make([]byte, 1)
@@ -136,14 +135,10 @@ func (c *Client) sendBets() error {
 }
 
 func (c* Client) recvResults() error {
-	b := make([]byte, 2)
+	b := make([]byte, 1024)
 	bytesRead := 0
 
-	log.Infof("A bytes: %v", b)
-
 	for bytesRead < 2 {
-		log.Infof("bytes read: %v | bytes: %v", bytesRead, b)
-
 		n, err := c.conn.Read(b[bytesRead:])
 		if err != nil {
 			return err
@@ -151,17 +146,14 @@ func (c* Client) recvResults() error {
 		bytesRead += n
 	}
 
-	log.Infof("B bytes: %v", b)
-
-	log.Infof("Winners value: %d", binary.BigEndian.Uint16(b[0:2]))
-
-
 	winnersLength := int(binary.BigEndian.Uint16(b[0:2]))
-	log.Infof("winners length: %d", winnersLength)
+	if winnersLength > 1024 {
+		bAux := make([]byte, winnersLength)
+		bAux = append(bAux, b[2:]...)
+		b = bAux
+	}
 
-	b = make([]byte, winnersLength)
-	bytesRead = 0
-	for bytesRead < winnersLength {
+	for bytesRead < winnersLength + 2 {
 		n, err := c.conn.Read(b[bytesRead:])
 		if err != nil {
 			return err

@@ -3,6 +3,7 @@ import logging
 import signal
 import sys
 from collections import defaultdict
+from threading import Barrier, Thread
 from common.utils import Bet, store_bets, load_bets, has_won
 
 OK = b'0'
@@ -15,8 +16,7 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self.listen_backlog = listen_backlog
-        self.finished_clients = 0
-        self.clients = {}
+        self.barrier = Barrier(listen_backlog)
 
         signal.signal(signal.SIGTERM, self.__handle_exit_signal)
         signal.signal(signal.SIGINT, self.__handle_exit_signal)
@@ -32,8 +32,9 @@ class Server:
 
         while True:
             client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
-
+            handler = Thread(target = self.__handle_client_connection, args = (client_sock,))
+            handler.start()
+            
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -42,15 +43,13 @@ class Server:
         client socket will also be closed
         """
         try:
-            socket_name = client_sock.getpeername()
+            agency = int.from_bytes(client_sock.recv(1), "big")
 
-            self.__recv_bets(client_sock)
-            self.finished_clients += 1
+            self.__recv_bets(client_sock, agency)
 
-            if self.finished_clients != self.listen_backlog:
-                return
+            self.barrier.wait()
 
-            self.__send_results()
+            self.__send_results(client_sock, agency)
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         #finally:
@@ -58,11 +57,7 @@ class Server:
         #    client_sock.close()
         #    self.clients.remove(client_sock)
 
-    def __recv_bets(self, client_sock):
-        agency = int.from_bytes(client_sock.recv(1), "big")
-        self.clients[agency] = client_sock
-        client_sock.send
-
+    def __recv_bets(self, client_sock, agency):
         while True:
             b = bytes()
             bytes_read = 0
@@ -85,42 +80,30 @@ class Server:
                 logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets_decoded)}')
                 client_sock.send(ERR)
 
-    def __send_results(self):
-        winners_by_agency = defaultdict(bytes)
-
+    def __send_results(self, client_sock, agency):
         logging.info('action: sorteo | result: success')
 
-        winners = [bet for bet in load_bets() if has_won(bet)]
-        for bet in winners:
-            winners_by_agency[bet.agency] += int(bet.document).to_bytes(4, "big", signed=False)
+        b = b''.join(int(bet.document).to_bytes(4, "big", signed=False) for bet in load_bets() if bet.agency == agency and has_won(bet))
+        winners_len = len(b)
+        b = winners_len.to_bytes(2, "big", signed=False) + b
 
-        for client_id, bets in winners_by_agency.items():
-            client_sock = self.clients.get(client_id)
-
-            bytes_to_send = len(bets)
-            bytes_sent = 0
-
-            b = bytes_to_send.to_bytes(2, "big", signed=False) + bets
-
-            while bytes_to_send > bytes_sent:
-                try:
-                    bytes_sent += client_sock.send(b[bytes_sent:])
-                except:
-                    logging.error(f"action: ganadores_enviados | result: fail | client: {client_id}")
-                    break
-
+        bytes_to_send = winners_len + 2
+        bytes_sent = 0
+        while bytes_to_send > bytes_sent:
             try:
-                client_sock.recv(1)
-                logging.info(f"action: conexión_cerrada | result: success | client: {client_id}")
-            except Exception as e:
-                logging.error(f"action: conexión_cerrada | result: fail | client: {client_id} | error: {e}")
-                pass
-            finally:
-                client_sock.close()
-                del self.clients[client_id]
+                bytes_sent += client_sock.send(b[bytes_sent:])
+            except:
+                logging.error(f"action: ganadores_enviados | result: fail | client: {agency}")
+                break
 
-        self.finished_clients = 0
-
+        try:
+            client_sock.recv(1)
+            logging.info(f"action: conexión_cerrada | result: success | client: {agency}")
+        except Exception as e:
+            logging.error(f"action: conexión_cerrada | result: fail | client: {agency} | error: {e}")
+            pass
+        finally:
+            client_sock.close()
 
     def __accept_new_connection(self):
         """

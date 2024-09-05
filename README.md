@@ -178,3 +178,22 @@ Cada ejercicio deberá resolverse en una rama independiente con nombres siguiend
 Puden obtener un listado del último commit de cada rama ejecutando `git ls-remote`.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+
+## Solución
+
+A continuación se realiza una explicación de la solución desarrollada para el ejercicio.
+
+## Consideraciones
+
+Se debe extraer el archivo `.data/dataset.zip` antes de correr el programa.
+
+## Protocolo
+
+El cliente lee de a batches el archivo .csv correspondiente. La cantidad de apuestas a leer estará ditada por la clave de configuración batch.maxAmount o la longitud del mensaje a enviar (debe ser menor a 8kb).
+
+A fin de poder identificar el inicio y final de un batch, el cliente envía por cada batch la longitud de este mismo, ocupando 2 bytes al inicio de cada mensaje.
+
+El servidor es capaz de identificar el inicio y fin de cada uno de los campos debido a que estos se encuentran separados por comas (`,`). El final de una apuesta puede ser identificado por el separado punto y coma (`;`). Se eligieorn estos separadores debido a su ausencia en los campos de los archivos .csv, ya que de otro modo la información a leer podría interferir con el protocolo.
+
+Por cada batch enviado, el servidor responde con un byte OK o ERROR a fin de poder sincronizar el envío de nuevos batches. Una vez finalizado el envío de datos, el cliente cierra la conexión al igual que el servidor.

@@ -17,6 +17,7 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self.listen_backlog = listen_backlog
         self.barrier = Barrier(listen_backlog)
+        self.clients = {}
 
         signal.signal(signal.SIGTERM, self.__handle_exit_signal)
         signal.signal(signal.SIGINT, self.__handle_exit_signal)
@@ -44,6 +45,7 @@ class Server:
         """
         try:
             agency = int.from_bytes(client_sock.recv(1), "big")
+            self.clients[agency] = client_sock
 
             self.__recv_bets(client_sock, agency)
 
@@ -104,6 +106,7 @@ class Server:
             pass
         finally:
             client_sock.close()
+            del self.clients[agency]
 
     def __accept_new_connection(self):
         """

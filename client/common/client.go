@@ -124,11 +124,6 @@ func (c *Client) sendBets() error {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2
 		}
-
-		// Check if reached EOF
-		if err1 != nil {
-			return nil
-		}
 		
 		buf := make([]byte, 1)
 		select {
@@ -138,6 +133,11 @@ func (c *Client) sendBets() error {
 			if _, err := c.conn.Read(buf); err != nil {
 				return err
 			}
+		}
+
+		// Check if reached EOF
+		if err1 != nil {
+			return nil
 		}
 	}
 }

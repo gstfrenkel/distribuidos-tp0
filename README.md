@@ -178,3 +178,14 @@ Cada ejercicio deberá resolverse en una rama independiente con nombres siguiend
 Puden obtener un listado del último commit de cada rama ejecutando `git ls-remote`.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+
+## Solución
+
+A continuación se realiza una explicación de la solución desarrollada para el ejercicio.
+
+## Protocolo
+
+El cliente lee de entre las variablas de entorno los campos de la apuesta a enviar al servidor. El servidor es capaz de identificar el inicio y fin de cada uno de los campos debido a que estos se encuentran separados por comas (`,`). El final de una apuesta puede ser identificado por el separado punto y coma (`;`). Se eligieorn estos separadores debido a su ausencia en los campos de los archivos .csv, ya que de otro modo la información a leer podría interferir con el protocolo.
+
+Una vez finalizado el envío de datos, el cliente cierra la conexión al igual que el servidor.

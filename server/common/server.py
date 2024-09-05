@@ -53,10 +53,6 @@ class Server:
             self.__send_results()
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
-        #finally:
-        #    logging.info(f"action: conexión_cerrada | result: success | client: {socket_name}")
-        #    client_sock.close()
-        #    self.clients.remove(client_sock)
 
     def __recv_bets(self, client_sock):
         agency = int.from_bytes(client_sock.recv(1), "big")

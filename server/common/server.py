@@ -16,7 +16,7 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self.listen_backlog = listen_backlog
-
+        self.winners_queue = Queue()
         self.recv_barrier = Barrier(listen_backlog + 1)
         self.clients = {}
 
@@ -31,13 +31,12 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-        winners_queue = Queue()
 
-        Process(target = self.__get_winners, args=(winners_queue,)).start()
+        Process(target = self.__get_winners, args=(self.winners_queue,)).start()
 
         while True:
             client_sock = self.__accept_new_connection()
-            handler = Process(target = self.__handle_client_connection, args=(client_sock, winners_queue,))
+            handler = Process(target = self.__handle_client_connection, args=(client_sock, self.winners_queue,))
             handler.start()
             
     def __handle_client_connection(self, client_sock, winners_queue):
@@ -118,7 +117,7 @@ class Server:
 
             logging.info('action: sorteo | result: success')
 
-            self.recv_barrier = Barrier(self.listen_backlog + 1)
+            self.recv_barrier.reset()
 
             for _ in range(self.listen_backlog):
                 winners_queue.put(winners)
@@ -147,6 +146,8 @@ class Server:
         for client in self.clients.values():
             client.close()
             logging.info('action: closed_client | result: success')
+        self.winners_queue.close()
+        self.winners_queue.join_thread()
         sys.exit(0)
 
     def __handle_process_exit_signal(self, signum, frame):

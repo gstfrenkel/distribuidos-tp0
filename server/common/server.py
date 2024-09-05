@@ -3,7 +3,7 @@ import logging
 import signal
 import sys
 from collections import defaultdict
-from threading import Barrier, Thread
+from multiprocessing import Barrier, Process
 from common.utils import Bet, store_bets, load_bets, has_won
 
 OK = b'0'
@@ -32,7 +32,7 @@ class Server:
 
         while True:
             client_sock = self.__accept_new_connection()
-            handler = Thread(target = self.__handle_client_connection, args = (client_sock,))
+            handler = Process(target = self.__handle_client_connection, args = (client_sock,))
             handler.start()
             
     def __handle_client_connection(self, client_sock):

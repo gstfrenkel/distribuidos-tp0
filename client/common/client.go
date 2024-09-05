@@ -112,9 +112,9 @@ func (c *Client) sendBets() error {
 			b = append(b, bet.toBytes()...)
 		}
 
-		// Discard last separator
+		// Discard last separator and check if there is any info to send
 		b = b[:len(b)-1]
-		if err1 != nil || len(b) == 0 {
+		if len(b) == 0 {
 			return nil
 		}
 
@@ -123,6 +123,11 @@ func (c *Client) sendBets() error {
 		} else if err2 != nil {
 			log.Infof("action: apuestas_enviadas | result: fail | cantidad: %d | error: %v", len(batch), err2)
 			return err2
+		}
+
+		// Check if reached EOF
+		if err1 != nil {
+			return nil
 		}
 		
 		buf := make([]byte, 1)

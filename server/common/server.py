@@ -47,8 +47,6 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
-        signal.signal(signal.SIGTERM, self.__handle_process_exit_signal)
-
         try:
             agency = int.from_bytes(client_sock.recv(1), "big")
             self.clients[agency] = client_sock
@@ -78,7 +76,7 @@ class Server:
             try:
                 bets = [Bet.__from_string__(agency, bet) for bet in bets_decoded]
                 store_bets(bets)
-                #logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets_decoded)}')
+                logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets_decoded)}')
                 client_sock.send(OK)
             except:
                 logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets_decoded)}')

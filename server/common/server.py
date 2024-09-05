@@ -94,7 +94,8 @@ class Server:
         for bet in winners:
             winners_by_agency[bet.agency] += int(bet.document).to_bytes(4, "big", signed=False)
 
-        for client_id, bets in winners_by_agency.items():
+        for client_id in range(1, self.listen_backlog+1):
+            bets = winners_by_agency[client_id]
             client_sock = self.clients.get(client_id)
 
             bytes_to_send = len(bets)
@@ -102,7 +103,7 @@ class Server:
 
             b = bytes_to_send.to_bytes(2, "big", signed=False) + bets
 
-            while bytes_to_send > bytes_sent:
+            while bytes_to_send + 2 > bytes_sent:
                 try:
                     bytes_sent += client_sock.send(b[bytes_sent:])
                 except:

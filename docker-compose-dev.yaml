@@ -34,9 +34,9 @@ services:
     environment:
       - CLI_ID=2
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Santiago Lionel
-      - APELLIDO=Lorca
-      - DOCUMENTO=30904465
+      - NOMBRE=Client
+      - APELLIDO=Two
+      - DOCUMENTO=22222222
       - NACIMIENTO=1999-03-17
       - NUMERO=7574
     networks:
@@ -51,9 +51,9 @@ services:
     environment:
       - CLI_ID=3
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Santiago Lionel
-      - APELLIDO=Lorca
-      - DOCUMENTO=30904465
+      - NOMBRE=Client
+      - APELLIDO=Three
+      - DOCUMENTO=33333333
       - NACIMIENTO=1999-03-17
       - NUMERO=7574
     networks:
@@ -68,9 +68,9 @@ services:
     environment:
       - CLI_ID=4
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Santiago Lionel
-      - APELLIDO=Lorca
-      - DOCUMENTO=30904465
+      - NOMBRE=Client
+      - APELLIDO=Four
+      - DOCUMENTO=44444444
       - NACIMIENTO=1999-03-17
       - NUMERO=7574
     networks:
@@ -85,9 +85,9 @@ services:
     environment:
       - CLI_ID=5
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Santiago Lionel
-      - APELLIDO=Lorca
-      - DOCUMENTO=30904465
+      - NOMBRE=Client
+      - APELLIDO=Five
+      - DOCUMENTO=55555555
       - NACIMIENTO=1999-03-17
       - NUMERO=7574
     networks:

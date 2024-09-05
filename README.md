@@ -178,3 +178,26 @@ Cada ejercicio deberá resolverse en una rama independiente con nombres siguiend
 Puden obtener un listado del último commit de cada rama ejecutando `git ls-remote`.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+
+## Solución
+
+A continuación se realiza una explicación de la solución desarrollada para el ejercicio.
+
+## Consideraciones
+
+Se debe extraer el archivo `.data/dataset.zip` antes de correr el programa.
+
+## Protocolo
+
+El cliente lee de a batches el archivo .csv correspondiente. La cantidad de apuestas a leer estará ditada por la clave de configuración batch.maxAmount o la longitud del mensaje a enviar (debe ser menor a 8kb).
+
+A fin de poder identificar el inicio y final de un batch, el cliente envía por cada batch la longitud de este mismo, ocupando 2 bytes al inicio de cada mensaje.
+
+El servidor es capaz de identificar el inicio y fin de cada uno de los campos debido a que estos se encuentran separados por comas (`,`). El final de una apuesta puede ser identificado por el separado punto y coma (`;`). Se eligieorn estos separadores debido a su ausencia en los campos de los archivos .csv, ya que de otro modo la información a leer podría interferir con el protocolo.
+
+Por cada batch enviado, el servidor responde con un byte OK o ERROR a fin de poder sincronizar el envío de nuevos batches.
+
+Debido a que cada cliente es atendido secuencialmente, el servidor guarda un registro de la cantidad de clientes atendidos. Una vez que este número coincide con el valor de SERVER_LISTEN_BACKLOG especificado en la configuración del servidor (se presume que este valor se coincide con la cantidad de agencias que consultarán al servidor), se procede a realizar el sorteo.
+
+A continuación, el servidor le envía a cada cliente los resultados de SU agencia, especificando con 2 bytes iniciales la longitud del mensaje y a continuación los documentos de los ganadores, los cuales ocupan 4 bytes cada uno. Una vez recibidos los resultados, cada agencia envía un ACK al servidor y cierra la conexión. Una vez que el servidor recibe este ACK, cierra la conexión con el cliente correspondiente.
